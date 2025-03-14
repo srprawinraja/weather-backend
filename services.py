@@ -39,10 +39,10 @@ def predict_temp(latitude: str, longitude: str, start_date: str, end_date: str, 
             }
         
         X_train, X_test, y_train, y_test = train_test_split(X_temp, y_temp, test_size=0.2, random_state=42)
-        temp_model = load_model(city)
+        temp_model = load_model(city+latitude+longitude)
         if(temp_model is None):
             temp_model = train_regression_model(X_train, y_train)
-            save_model(temp_model, city)
+            save_model(temp_model, city+latitude+longitude)
         y_pred = temp_model.predict(X_test)
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
