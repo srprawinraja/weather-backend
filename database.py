@@ -16,10 +16,14 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
+from sqlalchemy import Index
+
 class WeatherModel(Base):
     __tablename__ = "weather_models"
-    city = Column(String, primary_key=True) 
-    model_data = Column(LargeBinary)  
+    city = Column(String, primary_key=True, index=True) 
+    model_data = Column(LargeBinary)
+    __table_args__ = (Index('idx_city', 'city'),) 
+ 
 
 
 def init_db():
