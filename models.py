@@ -45,6 +45,7 @@ def load_model_from_db(city_name):
 
 def load_model_from_cache(city_name):
     if city_name in model_cache:
+        print(f"✅ Model for {city_name} loaded from cache!")
         return model_cache[city_name]  # ✅ Return cached model
     
     model = load_model_from_db(city_name)
