@@ -8,7 +8,7 @@ def save_model_to_db(model, city_name):
     session = SessionLocal()
     
     model_bytes = io.BytesIO()
-    joblib.dump(model, model_bytes)
+    joblib.dump(model, model_bytes, compress=3)
     
     compressed_data = zlib.compress(model_bytes.getvalue())  # ✅ Always compress before storing
     
@@ -52,4 +52,3 @@ def load_model_from_cache(city_name):
     if model:
         model_cache[city_name] = model  # 🔥 Store in cache
     return model
-
