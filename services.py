@@ -71,7 +71,7 @@ def predict_temp(latitude: str, longitude: str, start_date: str, end_date: str, 
 
 def read_csv(file):
     df = pd.read_csv(file, skiprows=3)
-    df.columns = ["temp"]
+    df.columns = ["date", "temp"]
     df = df.dropna()
     df = df.drop_duplicates()
     return df
