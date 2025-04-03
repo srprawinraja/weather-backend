@@ -1,0 +1,15 @@
+meta {
+  name: get weather
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/weather/?city_name=madurai
+  body: none
+  auth: inherit
+}
+
+params:query {
+  city_name: madurai
+}
