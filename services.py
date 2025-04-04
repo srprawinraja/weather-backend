@@ -18,46 +18,50 @@ API_KEY = os.getenv("API_KEY")
 
 def getWeatherService(city_name:str):
     try:
-        data = get_lat_long(city_name)
+        latLongdata = get_lat_long(city_name)
 
-        if data is None:
+        if latLongdata is None:
             raise ValueError("invalid city name")
-        lat = data["lat"]
-        lon = data["lon"]
+        lat = latLongdata["lat"]
+        lon = latLongdata["lon"]
+
         obj = TimezoneFinder() 
         timeZone = obj.timezone_at(lng=lon, lat=lat)
+        previousDayDate = get_previous_day()
 
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))  
         csv_file_path = os.path.join(BASE_DIR, "weatherDetail.csv")
-
-        previousDayDate = get_previous_day()
-
-        historicalUrl = f"{BASE_URL_HISTORICAL}latitude={lat}&longitude={lon}&start_date=2000-01-01&end_date={previousDayDate}&daily=weather_code,temperature_2m_mean,temperature_2m_max,temperature_2m_min,apparent_temperature_mean,apparent_temperature_max,sunrise,daylight_duration,sunshine_duration,precipitation_sum,precipitation_hours,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,shortwave_radiation_sum,et0_fao_evapotranspiration&timezone={timeZone}&format=csv"
-        response = requests.get(historicalUrl)
-        if response.status_code == 200: 
-            print("historical data request worked successfully") 
-            csv_file_path = StringIO(response.text)
+        df = retrieve_csv_from_directory(city_name)
+        if df is None:
+            historicalUrl = f"{BASE_URL_HISTORICAL}latitude={lat}&longitude={lon}&start_date=2000-01-01&end_date={previousDayDate}&daily=weather_code,temperature_2m_mean,temperature_2m_max,temperature_2m_min,apparent_temperature_mean,apparent_temperature_max,sunrise,daylight_duration,sunshine_duration,precipitation_sum,precipitation_hours,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,shortwave_radiation_sum,et0_fao_evapotranspiration&timezone={timeZone}&format=csv"
+            response = requests.get(historicalUrl)
+            if response.status_code == 200: 
+                print("historical data request worked successfully") 
+                csv_file_path = StringIO(response.text)
+            else:
+                latLongdata = get_lat_long("madurai")
+                lat = latLongdata["lat"]
+                lon = latLongdata["lon"]
+                timeZone = obj.timezone_at(lng=lon, lat=lat)
+            
+            weatherUrl = f"{BASE_URL_CURRENT}latitude={lat}&longitude={lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,uv_index_clear_sky_max,rain_sum,showers_sum,snowfall_sum,precipitation_sum,precipitation_hours,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,shortwave_radiation_sum,et0_fao_evapotranspiration&hourly=temperature_2m,weather_code&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,pressure_msl&forecast_days=3&timezone={timeZone}"
+            
+            df = read_csv(csv_file_path)
+            df = prepare_regression_data(df)
+            save_csv_to_directory(df, city_name)
         else:
-            data = get_lat_long("madurai")
-            lat = data["lat"]
-            lon = data["lon"]
-            timeZone = obj.timezone_at(lng=lon, lat=lat)
-        
+            print("retrieved from directory")
+
         weatherUrl = f"{BASE_URL_CURRENT}latitude={lat}&longitude={lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,uv_index_clear_sky_max,rain_sum,showers_sum,snowfall_sum,precipitation_sum,precipitation_hours,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,shortwave_radiation_sum,et0_fao_evapotranspiration&hourly=temperature_2m,weather_code&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,pressure_msl&forecast_days=3&timezone={timeZone}"
         
         #weatherUrl = 'https://2k7gl.wiremockapi.cloud/openMeteo'
+
         response = requests.get(weatherUrl)
         data = response.json()  
         currentWeatherDetail = getCurrentWeatherDetail(data)
         todayForecastDetails = getTodayForecastDetails(data)
         daysForecast = getDaysForecastDetail(data)
-
-
-        df = read_csv(csv_file_path)
-
-        df = prepare_regression_data(df)
-
-
+        
         tempMaxModelDetail = get_tempMax_model(df)
         tempMinModelDetail = get_tempMin_model(df)
         weatherModelDetail = get_weather_model(df)
@@ -363,6 +367,34 @@ def get_next_day(day):
 def get_previous_day():
     return (datetime.now() - timedelta(days=1)).date()
 
+def retrieve_csv_from_directory(city_name):
+    # Define the directory and the file path
+    directory_path = 'weather_data'  # Same as the directory used during saving
+    csv_file_path = os.path.join(directory_path, f"{city_name}_weather_data.csv")
+    
+    # Check if the file exists
+    if os.path.exists(csv_file_path):
+        # Read the CSV file into a DataFrame
+        df = pd.read_csv(csv_file_path)
+        print(f"CSV for {city_name} retrieved successfully.")
+        return df
+    else:
+        print(f"❌ File for {city_name} not found.")
+        return None
+    
+def save_csv_to_directory(csv_content, city_name):
+    # Ensure the directory exists
+    directory_path = 'weather_data'  # You can change this to any path you prefer
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+    
+    # Create the file path using the city name
+    csv_file_path = os.path.join(directory_path, f"{city_name}_weather_data.csv")
+    
+    # Save the CSV content to the file
+    csv_content.to_csv(csv_file_path, index=False)
+    print(f"CSV for {city_name} saved to {csv_file_path}")
+
 def classify_weather_code(code):
     if code == 0:
         return 0  # Clear
@@ -374,4 +406,3 @@ def classify_weather_code(code):
         return 3  # Snowy
     else:
         return np.nan  # Unknown
-
