@@ -33,9 +33,14 @@ def getWeatherService(city_name:str):
         csv_file_path = os.path.join(BASE_DIR, "weatherDetail.csv")
         df = retrieve_csv_from_directory(city_name)
         if df is None:
+            timeout = False
             historicalUrl = f"{BASE_URL_HISTORICAL}latitude={lat}&longitude={lon}&start_date=2000-01-01&end_date={previousDayDate}&daily=weather_code,temperature_2m_mean,temperature_2m_max,temperature_2m_min,apparent_temperature_mean,apparent_temperature_max,sunrise,daylight_duration,sunshine_duration,precipitation_sum,precipitation_hours,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,shortwave_radiation_sum,et0_fao_evapotranspiration&timezone={timeZone}&format=csv"
-            response = requests.get(historicalUrl)
-            if response.status_code == 200: 
+            try:
+                response = requests.get(historicalUrl, timeout=30)
+            except requests.exceptions.Timeout:
+                timeout=True
+                print(f"The request timed out")
+            if not timeout and response.status_code == 200: 
                 print("historical data request worked successfully") 
                 csv_file_path = StringIO(response.text)
             else:
