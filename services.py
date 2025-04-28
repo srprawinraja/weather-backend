@@ -39,7 +39,7 @@ def getWeatherService(city_name:str):
             historicalUrl = f"{BASE_URL_HISTORICAL}latitude={lat}&longitude={lon}&start_date=2000-01-01&end_date={previousDayDate}&daily=weather_code,temperature_2m_mean,temperature_2m_max,temperature_2m_min,apparent_temperature_mean,apparent_temperature_max,sunrise,daylight_duration,sunshine_duration,precipitation_sum,precipitation_hours,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,shortwave_radiation_sum,et0_fao_evapotranspiration&timezone={timeZone}&format=csv"
             
             try:
-                response = requests.get(historicalUrl, timeout=5)
+                response = requests.get(historicalUrl, timeout=1)
             except requests.exceptions.Timeout:
                 timeout=True
                 print(f"The request timed out")
