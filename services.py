@@ -32,28 +32,35 @@ def getWeatherService(city_name:str):
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))  
         csv_file_path = os.path.join(BASE_DIR, "weatherDetail.csv")
         df = retrieve_csv_from_directory(city_name)
+
         if df is None:
+            print("no cached csv found")
             timeout = False
             historicalUrl = f"{BASE_URL_HISTORICAL}latitude={lat}&longitude={lon}&start_date=2000-01-01&end_date={previousDayDate}&daily=weather_code,temperature_2m_mean,temperature_2m_max,temperature_2m_min,apparent_temperature_mean,apparent_temperature_max,sunrise,daylight_duration,sunshine_duration,precipitation_sum,precipitation_hours,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,shortwave_radiation_sum,et0_fao_evapotranspiration&timezone={timeZone}&format=csv"
+            
             try:
+                raise requests.exceptions.Timeout("oops")
                 response = requests.get(historicalUrl, timeout=30)
             except requests.exceptions.Timeout:
                 timeout=True
                 print(f"The request timed out")
+
             if not timeout and response.status_code == 200: 
-                print("historical data request worked successfully") 
+                print("fetched csv from open meteo") 
                 csv_file_path = StringIO(response.text)
             else:
+                print("return default value")
+                city_name="madurai"
                 latLongdata = get_lat_long("madurai")
                 lat = latLongdata["lat"]
                 lon = latLongdata["lon"]
                 timeZone = obj.timezone_at(lng=lon, lat=lat)
-            
-            weatherUrl = f"{BASE_URL_CURRENT}latitude={lat}&longitude={lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,uv_index_clear_sky_max,rain_sum,showers_sum,snowfall_sum,precipitation_sum,precipitation_hours,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,shortwave_radiation_sum,et0_fao_evapotranspiration&hourly=temperature_2m,weather_code&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,pressure_msl&forecast_days=3&timezone={timeZone}"
-            
+                        
             df = read_csv(csv_file_path)
             df = prepare_regression_data(df)
-            save_csv_to_directory(df, city_name)
+            if not timeout and response.status_code == 200: 
+                save_csv_to_directory(df, city_name)
+
         else:
             print("retrieved from directory")
 
