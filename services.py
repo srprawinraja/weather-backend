@@ -247,6 +247,7 @@ def getDaysForecastDetail(data):
 
 
 def getCurrentWeatherDetail(data):
+    print(data)
     try:
         current = data["current"]
         temp = current["temperature_2m"]
