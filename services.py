@@ -18,16 +18,16 @@ API_KEY = os.getenv("API_KEY")
 
 def getWeatherService(city_name:str):
     try:
-        latLongdata = get_lat_long(city_name)
+        latLongdata = get_lat_long(city_name) # get latitude and longitude based on given city
 
-        if latLongdata is None:
+        if latLongdata is None:    # if latitude and longtiude is null then raise error
             raise ValueError("invalid city name")
         lat = latLongdata["lat"]
         lon = latLongdata["lon"]
 
-        obj = TimezoneFinder() 
+        obj = TimezoneFinder()  # get the time zone for the city because the for open meteo request url should contain time zone
         timeZone = obj.timezone_at(lng=lon, lat=lat)
-        previousDayDate = get_previous_day()
+        previousDayDate = get_previous_day() # ???
 
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))  
         csv_file_path = os.path.join(BASE_DIR, "weatherDetail.csv")
@@ -40,7 +40,7 @@ def getWeatherService(city_name:str):
             
             try:
                 response = requests.get(historicalUrl, timeout=1)
-            except requests.exceptions.Timeout:
+            except requests.exceptions.Timeout: # handle time out
                 timeout=True
                 print(f"The request timed out")
 
@@ -161,7 +161,8 @@ def getWeatherService(city_name:str):
         }
 
 def read_csv(file_path):
-  df = pd.read_csv(file_path, skiprows=3)
+  # change the data into table using dataframe
+  df = pd.read_csv(file_path, skiprows=3) # skips first three row 
   df.columns = [
     "timestamp",
     "weather_code",
@@ -182,9 +183,9 @@ def read_csv(file_path):
     "evapotranspiration_mm"]
   df.drop(columns=["timestamp"], inplace=True)
 
-  df['sunset_time'] = pd.to_datetime(df['sunset_time'], errors='coerce', format='%Y-%m-%dT%H:%M')
+  df['sunset_time'] = pd.to_datetime(df['sunset_time'], errors='coerce', format='%Y-%m-%dT%H:%M') # conver sunset time into second second
   df['sunset_time'] = df['sunset_time'].dt.hour * 3600 + df['sunset_time'].dt.minute * 60 + df['sunset_time'].dt.second
-  df["weather_code"] = df["weather_code"].apply(lambda x: classify_weather_code(x))
+  df["weather_code"] = df["weather_code"].apply(lambda x: classify_weather_code(x)) # replace common weather code
 
 
   df.dropna()
@@ -192,13 +193,13 @@ def read_csv(file_path):
 
 
 def prepare_regression_data(df):
-  df["tomorrow_weather_code"] = df["weather_code"].shift(-1)
+  df["tomorrow_weather_code"] = df["weather_code"].shift(-1)   
   df['weather_day_after'] = df['weather_code'].shift(-2)
   df["tomorrow_temperature_max_c"] = df["temperature_max_c"].shift(-1)
   df["day_after_tomorrow_temperature_max_c"] = df["temperature_max_c"].shift(-2)
   df["tomorrow_temperature_min_c"] = df["temperature_min_c"].shift(-1)
   df["day_after_tomorrow_temperature_min_c"] = df["temperature_min_c"].shift(-2)
-
+    # above will makes sure that each record have tomorrow and day after field with next days data
   df = df.dropna(subset=["tomorrow_weather_code", 'weather_day_after', 'tomorrow_temperature_max_c', "day_after_tomorrow_temperature_max_c", 'tomorrow_temperature_min_c', 'day_after_tomorrow_temperature_min_c'])
   return df
 
