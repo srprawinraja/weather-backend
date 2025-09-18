@@ -3,7 +3,7 @@
 
 # ☁️ Backend (FastAPI) – `README.md`
 
-```markdown
+``markdown
 # Weather Forecast Backend
 
 A FastAPI service that provides current conditions, today’s forecast, a 3-day forecast,  
@@ -12,7 +12,7 @@ It aggregates data from external APIs and returns a single JSON response to the 
 
 ---
 
-## ✨ Features
+# ✨ Features
 - Fetches current weather, air quality, and a 3-day forecast from **Open Meteo**.
 - Extends the forecast by **2 extra days** using a **Random Forest Regression/Classifier** model.
 - Converts city names to coordinates using the **OpenWeatherMap** Geocoding API.
@@ -21,7 +21,7 @@ It aggregates data from external APIs and returns a single JSON response to the 
 
 ---
 
-## 🛠 Tech Stack
+# 🛠 Tech Stack
 - **Language:** Python 3.x  
 - **Framework:** FastAPI  
 - **ML:** scikit-learn (RandomForestClassifier & RandomForestRegressor)  
