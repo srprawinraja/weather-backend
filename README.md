@@ -33,3 +33,14 @@ It aggregates data from external APIs and returns a single JSON response to the 
 1. Clone this repository:
    ```bash
    git clone https://github.com/yourusername/weather-backend.git
+2. Create and activate a virtual environment.
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+4. Set your OpenWeatherMap API key as an environment variable:
+   ```bash
+   export OWM_API_KEY="your_key_here"
+5. Run the server:
+   ``` bash
+   uvicorn main:app --reload
+6. Access the API at http://localhost:8000.
